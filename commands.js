@@ -22,49 +22,110 @@ function getDataFile(fileName) {
 }
 
 /**
- * Sets points on user's account. Local function.
- * @param {import('discord.js').User} user 
+ * Sets points on user's account.
+ * @param {CharProfile} char
  * @param {number} val 
  */
-function setBalance(user, val) {
-    let result = true
+function setBalance(char, val) {
     let tbl = getDataFile(BANK_FILE)
-    tbl[user.id] = val
-    fs.writeFileSync(BANK_FILE, JSON.stringify(tbl, null, 4), 'utf8')
+    let charID = char.userID
+    tbl[charID] = val
+    saveData(tbl, BANK_FILE)
+}
+
+/**
+ * Withdraws amt from char's bank account.
+ * @param {CharProfile} char Character withdrawing the money.
+ * @param {number} amt The amount to be withdrawn.
+ */
+function withdraw(char, amt) {
+    let result = ""
+    let charID = char.userID
+    let bank = getDataFile(BANK_FILE)
+    let chars = getDataFile(CHAR_FILE)
+    let curAmt = bank[charID]
+    if (typeof (curAmt) === 'undefined')
+        result = 'No account associated with this character'
+    else if (amt > curAmt) {
+        result = 'Insufficient funds.'
+    } else {
+        char.money += amt
+        bank[charID] -= amt
+        saveData(bank, BANK_FILE)
+        result = `Withdrew ${amt} from bank account; new balance is ${bank[charID]}`
+    }
+    chars.characters[char.userID] = char
+    saveData(chars, CHAR_FILE)
+    saveData(bank, BANK_FILE)
+    return result
+}
+
+
+/**
+ * Deposits amt into char's bank account.
+ * @param {CharProfile} char 
+ * @param {number} amt 
+ */
+function deposit(char, amt) {
+    let bank = getDataFile(BANK_FILE)
+    let chars = getDataFile(CHAR_FILE)
+    let charID = char.userID
+    let result = ""
+    amt = Math.min(amt, char.money)
+    if (typeof (bank[charID]) === 'undefined') {
+        char.money -= amt
+        setBalance(char, amt)
+        result = `${amt} deposited into new account.`
+    } else {
+        char.money -= amt
+        bank[charID] += amt
+        result = `${amt} deposited into bank account; new balance is ${bank[charID]}.`
+        saveData(bank, BANK_FILE)
+    }
+    chars.characters[charID] = char
+    saveData(chars, CHAR_FILE)
     return result
 }
 
 /**
- * Gets points on user's account. Local function.
- * @param {import('discord.js').User} user 
+ * Gets points on user's account.
+ * @param {CharProfile} char
  */
-function getBalance(user) {
+function getBalance(char) {
     let tbl = getDataFile(BANK_FILE)
-    return tbl[user.id] || 0
+    let charID = char.userID
+    return tbl[charID] || 0
 }
 
 /**
- * Saves a character profile.
- * @param {CharProfile} char 
+ * Saves obj to filename.
+ * @param {any} obj The object to save.
+ * @param {string} fileName The filename to save to.
  */
-function saveChar(char) {
-    let tbl = getDataFile(CHAR_FILE)
-    tbl[char.userID] = char
-    fs.writeFileSync(CHAR_FILE, JSON.stringify(tbl, null, 4), 'utf8')
+function saveData(obj, fileName) {
+    fs.writeFileSync(fileName, JSON.stringify(obj, null, 4), 'utf8')
 }
 
 /**
- * Returns a character profile to the channel.
- * @param {CharProfile} char 
+ * Returns a CharProfile with the character's name.
+ * @param {import('discord.js').User} user The user who owns the character.
+ * @param {string} charName Name of the character being found.
+ * @returns {CharProfile | null} The CharProfile with the given charName,
+ * or null if not found.
  */
-function printChar(char) {
-    return `
-\`\`\`
-Name: ${char.name}
-Race: ${char.race}
-Job: ${char.job}
-Money: ${char.money}
-\`\`\``
+function charFromFile(user, charName) {
+    let charTbl = getDataFile(CHAR_FILE)
+    let charID = `${charName}-${user.id}`
+    let charRaw = charTbl.characters[charID]
+    if (charRaw) {
+        return new CharBuilder(user, charRaw.name)
+            .withJob(charRaw.job)
+            .withRace(charRaw.race)
+            .withStartingMoney(charRaw.money)
+            .build()
+    } else {
+        return null;
+    }
 }
 
 commands = {}
@@ -81,24 +142,34 @@ commands = {}
 commands.createchar = function (bot, chan, user, name, race) {
     let tbl = getDataFile(CHAR_FILE)
     let helpMsg = 'Try `!createchar CHAR_NAME CHAR_RACE.` Example: `!createchar Rikkas Dwarf`'
-    if (tbl[user.id]) {
-        chan.send(`You have a character already.`)
-    } else if (!name) {
+    if (!name) {
         chan.send(`Your character must have a name.\n${helpMsg}`)
     } else if (!race) {
         chan.send(`Your character must have a race.\n${helpMsg}`)
     } else {
-        let builder = new CharBuilder()
+        let builder = new CharBuilder(user, name)
         let char = builder
-            .withName(name)
             .withRace(race)
             .withStartingMoney(0)
-            .withUserID(user.id)
             .build()
-        saveChar(char)
-        setBalance(user, 0)
-        chan.send(`New character **${char.name}** created.`)
-        chan.send(printChar(char))
+        let charList = tbl.users[user.id]
+        if (charList) {
+            if (charList.includes(char.userID))
+                chan.send('You have a character with this name already.')
+            else {
+                tbl.users[user.id].push(char.userID)
+                tbl.characters[charID] = char
+                saveData(tbl, CHAR_FILE)
+                chan.send(`New character **${char.name}** created.`)
+                chan.send(char.toString())
+            }
+        } else {
+            tbl.users[user.id] = [char.userID]
+            tbl.characters[char.userID] = char
+            saveData(tbl, CHAR_FILE)
+            chan.send(`New character **${char.name}** created.`)
+            chan.send(char.toString())
+        }
     }
 }
 
@@ -107,16 +178,19 @@ commands.createchar = function (bot, chan, user, name, race) {
  * Ex !removechar
  * @param {import('discord.js').Client} bot Discord bot reference
  * @param {import('discord.js').TextChannel} chan Discord channel.
- * @param {import('discord.js').User} user User sending the message,
+ * @param {import('discord.js').User} user User sending the message.
+ * @param {string} charName Name of the character being deleted.
  */
-commands.removechar = function (bot, chan, user) {
+commands.removechar = function (bot, chan, user, charName) {
     let charTbl = getDataFile(CHAR_FILE)
     let bankTbl = getDataFile(BANK_FILE)
-    let charName = tbl[user.id]['name']
-    delete charTbl[user.id]
+    let charID = `${charName}-${user.id}`
+    let charList = charTbl.users[user.id]
+    charTbl.users[user.id] = charList.filter((val) => val !== charID)
+    delete charTbl.characters[charID]
     delete bankTbl[user.id]
-    fs.writeFileSync(CHAR_FILE, charTbl, 'utf8')
-    fs.writeFileSync(BANK_FILE, bankTbl, 'utf8')
+    saveData(charTbl, CHAR_FILE)
+    saveData(bankTbl, BANK_FILE)
     chan.send(`Character ${name}deleted.`)
 }
 
@@ -126,16 +200,57 @@ commands.removechar = function (bot, chan, user) {
  * @param {import('discord.js').Client} bot Discord bot reference
  * @param {import('discord.js').TextChannel} chan Discord channel.
  * @param {import('discord.js').User} user User sending the message,
+ * @param {string} charName Name of the character to view.
  */
-commands.viewchar = function (bot, chan, user) {
-    let charTbl = getDataFile(CHAR_FILE)
-    let char = charTbl[user.id]
+commands.viewchar = function (bot, chan, user, charName) {
+    let char = charFromFile(user, charName)
     if (char)
-        chan.send(printChar(char))
+        chan.send(char.toString())
     else
-        chan.send('You do not have a character to print. Try `!createchar`.')
+        chan.send(`${charName} does not exist. Try \`!createchar ${charName} (race).\`.'`)
 }
 
+/**
+ * Displays the given charName's balance.
+ * @param {import('discord.js').Client} bot Discord bot reference
+ * @param {import('discord.js').TextChannel} chan Discord channel.
+ * @param {import('discord.js').User} user User sending the message,
+ * @param {string} charName Name of the character to view.
+ */
+commands.balance = function (bot, chan, user, charName) {
+    let char = charFromFile(user, charName)
+    if (char) {
+        let bal = getBalance(char)
+        chan.send(`${charName} has ${bal} coins stored here.`)
+    } else {
+        chan.send(`${charName} does not exist.`)
+    }
+}
 
+/**
+ * Withdraws amt from char's account. 
+ * @param {import('discord.js').Client} bot Discord bot reference
+ * @param {import('discord.js').TextChannel} chan Discord channel.
+ * @param {import('discord.js').User} user User sending the message,
+ * @param {string} charName Name of the character withdrawing.
+ */
+commands.withdraw = function (bot, chan, user, charName, amt) {
+    let char = charFromFile(user, charName)
+    let val = parseInt(amt, 10)
+    chan.send(withdraw(char, val))
+}
+
+/**
+ * Deposits amt into char's account.
+ * @param {import('discord.js').Client} bot Discord bot reference
+ * @param {import('discord.js').TextChannel} chan Discord channel.
+ * @param {import('discord.js').User} user User sending the message,
+ * @param {string} charName Name of the character depositing.
+ */
+commands.deposit = function (bot, chan, user, charName, amt) {
+    let char = charFromFile(user, charName)
+    let val = parseInt(amt, 10)
+    chan.send(deposit(char, val))
+}
 
 module.exports = commands

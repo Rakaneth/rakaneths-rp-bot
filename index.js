@@ -7,11 +7,24 @@ const { BANK_FILE, CHAR_FILE } = require('./config.json')
 
 bot.on('ready', () => {
     console.log(`Logged in as ${bot.user.username}.`)
-    for (let f of [BANK_FILE, CHAR_FILE]) {
-        if (!fs.exists(f)) {
-            fs.writeFileSync(f, JSON.stringify({}, null, 4), 'utf8')
+
+    fs.exists(BANK_FILE, (exists) => {
+        if (!exists) {
+            console.log('Creating new bank file')
+            let bankShell = {}
+            fs.writeFileSync(BANK_FILE, JSON.stringify(bankShell, null, 4), 'utf8')
         }
-    }
+    })
+    fs.exists(CHAR_FILE, (exists) => {
+        if (!exists) {
+            console.log('Creating new profile store')
+            let profShell = {
+                users: {},
+                characters: {}
+            }
+            fs.writeFileSync(CHAR_FILE, JSON.stringify(profShell, null, 4), 'utf8')
+        }
+    })
 })
 
 bot.on('message', (msg) => {

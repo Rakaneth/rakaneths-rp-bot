@@ -6,3 +6,6 @@ node_modules/
 !**/package.json
 !**/config.json
 !**package-lock.json
+
+# VSCode
+.vscode/
