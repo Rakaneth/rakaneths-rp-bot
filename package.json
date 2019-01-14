@@ -1,0 +1,17 @@
+{
+  "name": "discord-bot-test",
+  "version": "0.0.1-ALPHA",
+  "description": "Testing a discord bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rakaneth",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.4.2"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.9"
+  }
+}
