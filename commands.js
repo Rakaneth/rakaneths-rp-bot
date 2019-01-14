@@ -158,7 +158,7 @@ commands.createchar = function (bot, chan, user, name, race) {
                 chan.send('You have a character with this name already.')
             else {
                 tbl.users[user.id].push(char.userID)
-                tbl.characters[charID] = char
+                tbl.characters[char.userID] = char
                 saveData(tbl, CHAR_FILE)
                 chan.send(`New character **${char.name}** created.`)
                 chan.send(char.toString())
@@ -188,10 +188,10 @@ commands.removechar = function (bot, chan, user, charName) {
     let charList = charTbl.users[user.id]
     charTbl.users[user.id] = charList.filter((val) => val !== charID)
     delete charTbl.characters[charID]
-    delete bankTbl[user.id]
+    delete bankTbl[charID]
     saveData(charTbl, CHAR_FILE)
     saveData(bankTbl, BANK_FILE)
-    chan.send(`Character ${name}deleted.`)
+    chan.send(`Character ${charName}deleted.`)
 }
 
 /**
