@@ -8,3 +8,4 @@ This is a super basic Discord RP bot.
 * [x] Bank (basic)
 * [x] Save characters
 * [x] Delete characters
+* [x] Add help text

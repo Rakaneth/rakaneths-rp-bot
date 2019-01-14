@@ -44,7 +44,9 @@ function withdraw(char, amt) {
     let bank = getDataFile(BANK_FILE)
     let chars = getDataFile(CHAR_FILE)
     let curAmt = bank[charID]
-    if (typeof (curAmt) === 'undefined')
+    if (amt <= 0)
+        result = 'Amount must be greater than zero.'
+    else if (typeof (curAmt) === 'undefined')
         result = 'No account associated with this character'
     else if (amt > curAmt) {
         result = 'Insufficient funds.'
@@ -72,7 +74,9 @@ function deposit(char, amt) {
     let charID = char.userID
     let result = ""
     amt = Math.min(amt, char.money)
-    if (typeof (bank[charID]) === 'undefined') {
+    if (amt <= 0)
+        result = "Amount must be greater than zero."
+    else if (typeof (bank[charID]) === 'undefined') {
         char.money -= amt
         setBalance(char, amt)
         result = `${amt} deposited into new account.`
@@ -129,6 +133,14 @@ function charFromFile(user, charName) {
 }
 
 commands = {}
+commands.docs = {
+    createchar: 'Usage: `!createchar name race`\nCreates a character of race **race** named **name**.\nExample: `!createchar Rikkas Dwarf`',
+    removechar: 'Usage: `!removechar (name)`\nDeletes the character named **name**.\nExample: `!removechar Rikkas`\n**WARNING:** This action cannot be undone and there is **__NO CONFIRMATION. BE CAREFUL.__**',
+    viewchar: 'Usage: `!viewchar name`\nViews the character named **name**.\nExample: `!viewchar Rikkas`',
+    deposit: 'Usage: `!deposit name amount`\nDeposits **amount** into **name**\'s bank account.\nExample: `!deposit Rikkas 300`\nIf **amount** is more than what the character has on them, the character will deposit all of their current funds.',
+    withdraw: 'Usage: `!withdraw name amount`\nWithdraws **amount** from **name**\'s bank account.\nExample: `!withdraw Rikkas 300`\nAn error will be given if there are not enough funds in the character\'s account.',
+    balance: 'Usage: `!balance name`\nGets the current bank balance for **name**\'s account.\nExample: `!balance Rikkas`'
+}
 
 /**
  * Creates a character for the user.
@@ -251,6 +263,24 @@ commands.deposit = function (bot, chan, user, charName, amt) {
     let char = charFromFile(user, charName)
     let val = parseInt(amt, 10)
     chan.send(deposit(char, val))
+}
+
+/**
+ * @param {import('discord.js').Client} bot Discord bot reference
+ * @param {import('discord.js').TextChannel} chan Discord channel.
+ * @param {import('discord.js').User} user User sending the message,
+ * @param {string} cmdName The command to explain
+ */
+commands.help = function (bot, chan, user, cmdName) {
+    if (cmdName && this.docs[cmdName])
+        chan.send(`!\`${cmdName}\`\n${this.docs[cmdName]}`)
+    else if (cmdName && !this.docs[cmdName])
+        chan.send(`No help available for ${cmdName}.`)
+    else {
+        for (let cmd of Object.keys(this.docs)) {
+            chan.send(`!\`${cmd}\`\n${this.docs[cmd]}`)
+        }
+    }
 }
 
 module.exports = commands

@@ -40,7 +40,7 @@ bot.on('message', (msg) => {
                 console.error(`No such command: ${cmd}`)
             } else {
                 args = args.concat(cmdSplit)
-                fn.apply(this, args)
+                fn.apply(cmds, args)
             }
         }
     }
