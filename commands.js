@@ -162,7 +162,7 @@ commands.createchar = function (bot, chan, user, name, race) {
         let builder = new CharBuilder(user, name)
         let char = builder
             .withRace(race)
-            .withStartingMoney(0)
+            .withStartingMoney(1000)
             .build()
         let charList = tbl.users[user.id]
         if (charList) {
@@ -218,6 +218,8 @@ commands.viewchar = function (bot, chan, user, charName) {
     let char = charFromFile(user, charName)
     if (char)
         chan.send(char.toString())
+    else if (typeof (charName) === 'undefined')
+        chan.send('Try `!viewchar (your character\'s name)`.')
     else
         chan.send(`${charName} does not exist. Try \`!createchar ${charName} (race).\`.'`)
 }
@@ -234,9 +236,9 @@ commands.balance = function (bot, chan, user, charName) {
     if (char) {
         let bal = getBalance(char)
         chan.send(`${charName} has ${bal} coins stored here.`)
-    } else {
-        chan.send(`${charName} does not exist.`)
-    }
+    } else
+        chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
+
 }
 
 /**
@@ -248,8 +250,11 @@ commands.balance = function (bot, chan, user, charName) {
  */
 commands.withdraw = function (bot, chan, user, charName, amt) {
     let char = charFromFile(user, charName)
-    let val = parseInt(amt, 10)
-    chan.send(withdraw(char, val))
+    if (char) {
+        let val = parseInt(amt, 10)
+        chan.send(withdraw(char, val))
+    } else
+        chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
 }
 
 /**
@@ -261,8 +266,11 @@ commands.withdraw = function (bot, chan, user, charName, amt) {
  */
 commands.deposit = function (bot, chan, user, charName, amt) {
     let char = charFromFile(user, charName)
-    let val = parseInt(amt, 10)
-    chan.send(deposit(char, val))
+    if (char) {
+        let val = parseInt(amt, 10)
+        chan.send(deposit(char, val))
+    } else
+        chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
 }
 
 /**
