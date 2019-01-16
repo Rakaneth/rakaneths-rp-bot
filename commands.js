@@ -14,15 +14,15 @@ const {
 
 commands = {}
 commands.docs = {
-    createchar: 'Usage: `!createchar name race`\nCreates a character of race **race** named **name**.\nExample: `!createchar Rikkas Dwarf`',
-    removechar: 'Usage: `!removechar (name)`\nDeletes the character named **name**.\nExample: `!removechar Rikkas`\n**WARNING:** This action cannot be undone and there is **__NO CONFIRMATION. BE CAREFUL.__**',
-    viewchar: 'Usage: `!viewchar name`\nViews the character named **name**.\nExample: `!viewchar Rikkas`',
-    deposit: 'Usage: `!deposit name amount`\nDeposits **amount** into **name**\'s bank account.\nExample: `!deposit Rikkas 300`\nIf **amount** is more than what the character has on them, the character will deposit all of their current funds.',
-    withdraw: 'Usage: `!withdraw name amount`\nWithdraws **amount** from **name**\'s bank account.\nExample: `!withdraw Rikkas 300`\nAn error will be given if there are not enough funds in the character\'s account.',
-    balance: 'Usage: `!balance name`\nGets the current bank balance for **name**\'s account.\nExample: `!balance Rikkas`',
+    createchar: 'Usage: `!createchar name race`\nCreates a character of race `race` named `name`.\nExample: `!createchar Rikkas Dwarf`',
+    removechar: 'Usage: `!removechar (name)`\nDeletes the character named `name`.\nExample: `!removechar Rikkas`\n**WARNING:** This action cannot be undone and there is **__NO CONFIRMATION. BE CAREFUL.__**',
+    viewchar: 'Usage: `!viewchar name`\nViews the character named `name`.\nExample: `!viewchar Rikkas`',
+    deposit: 'Usage: `!deposit name amount`\nDeposits `amount` into `name`\'s bank account.\nExample: `!deposit Rikkas 300`\nIf **amount** is more than what the character has on them, the character will deposit all of their current funds.',
+    withdraw: 'Usage: `!withdraw name amount`\nWithdraws `amount` from `name`\'s bank account.\nExample: `!withdraw Rikkas 300`\nAn error will be given if there are not enough funds in the character\'s account.',
+    balance: 'Usage: `!balance name`\nGets the current bank balance for `name`\'s account.\nExample: `!balance Rikkas`',
     describe: 'Usage: `!describe name`\nEnters description mode. The next message you send will change your character\'s description.\n`!cancel` will prevent changes to the description.',
-    addmoney: 'Usage: `!addmoney name amount`\nAdds **amount** to **name**\'s personal funds.\nExample: `!addmoney Rikkas 300`',
-    spendmoney: 'Usage: `!spendmoney name amount`\nSpends **amount** of **name**\'s personal funds.\nExample: `!spendmoney Rikkas 300`\nAn error will be given if there are not enough funds on the character.'
+    addmoney: 'Usage: `!addmoney name amount`\nAdds `amount` to `name`\'s personal funds.\nExample: `!addmoney Rikkas 300`',
+    spendmoney: 'Usage: `!spendmoney name amount`\nSpends `amount` of `name`\'s personal funds.\nExample: `!spendmoney Rikkas 300`\nAn error will be given if there are not enough funds on the character.'
 }
 
 /**

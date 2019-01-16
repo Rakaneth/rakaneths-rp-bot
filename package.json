@@ -1,6 +1,6 @@
 {
   "name": "discord-bot-test",
-  "version": "0.1.0-ALPHA",
+  "version": "0.1.1-ALPHA",
   "description": "Testing a discord bot",
   "main": "index.js",
   "scripts": {

@@ -2,15 +2,10 @@
 
 This is a super basic Discord RP bot.
 
-# DONE
-
-* [x] Character profiles (basic)
-* [x] Bank (basic)
-* [x] Save characters
-* [x] Delete characters
-* [x] Add help text
-
 # CHANGELOG
+## v. 0.1.1-ALPHA
+
+* Help text cleanup.
 
 ## v. 0.1.0-ALPHA
 
