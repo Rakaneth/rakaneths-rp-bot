@@ -3,6 +3,10 @@
 This is a super basic Discord RP bot.
 
 # CHANGELOG
+## v. 0.1.2-ALPHA
+
+* `!viewchar` now views any character, not just those owned by the user.
+
 ## v. 0.1.1-ALPHA
 
 * Help text cleanup.

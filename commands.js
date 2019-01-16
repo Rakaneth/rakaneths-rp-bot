@@ -9,7 +9,8 @@ const {
     withdraw,
     getDataFile,
     getUser,
-    updateChar } = require('./utils.js')
+    updateChar,
+    charByName } = require('./utils.js')
 
 
 commands = {}
@@ -100,11 +101,11 @@ commands.removechar = function (bot, chan, user, charName) {
  * @param {string} charName Name of the character to view.
  */
 commands.viewchar = function (bot, chan, user, charName) {
-    let char = charFromFile(user, charName)
+    let char = charByName(charName)
     if (char)
         chan.send(char.toString())
     else if (typeof (charName) === 'undefined')
-        chan.send('Try `!viewchar (your character\'s name)`.')
+        chan.send('Try `!viewchar (character\'s name)`.')
     else
         chan.send(`${charName} does not exist. Try \`!createchar ${charName} (race).\`.'`)
     return [userModes.MODE_TALK, null]

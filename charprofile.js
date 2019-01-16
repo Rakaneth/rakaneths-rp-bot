@@ -6,7 +6,7 @@ class CharProfile {
      */
     constructor(user, charName) {
         this.name = charName || "No name"
-        this.userID = `${this.name}-${user.id}`
+        this.userID = (user) ? `${this.name}-${user.id}` : "no userID"
         this.money = 0
         this.race = "Human"
         this.job = "Fighter"

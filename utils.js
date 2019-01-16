@@ -129,8 +129,32 @@ function charFromFile(user, charName) {
             .withDesc(charRaw.desc)
             .build()
     } else {
-        return null;
+        return null
     }
+}
+
+/**
+ * Returns a CharProfile with the character's name, regardless of owner.
+ * @param {string} charName Name of the character being found.
+ * @returns {CharProfile | null} The CharProfile with the given charName
+ * or null if not found.
+ */
+function charByName(charName) {
+    let { characters } = getDataFile(CHAR_FILE)
+    let charID = Object.keys(characters).find((id) => {
+        return id.startsWith(charName)
+    })
+    if (charID) {
+        let charRaw = characters[charID]
+        let char = new CharProfile()
+        char.name = charRaw.name
+        char.userID = charRaw.userID
+        char.job = charRaw.job
+        char.money = charRaw.money
+        char.desc = charRaw.desc
+        return char
+    } else
+        return null
 }
 
 /**
@@ -151,5 +175,6 @@ module.exports = {
     withdraw,
     getDataFile,
     getUser,
-    updateChar
+    updateChar,
+    charByName
 }
