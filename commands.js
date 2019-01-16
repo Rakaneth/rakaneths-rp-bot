@@ -1,136 +1,16 @@
-const fs = require('fs')
-const { CharProfile, CharBuilder } = require('./charprofile')
+const { CharBuilder } = require('./charprofile')
 const { CHAR_FILE, BANK_FILE } = require('./config.json')
+const userModes = require('./usermodes')
+const {
+    charFromFile,
+    saveData,
+    getBalance,
+    deposit,
+    withdraw,
+    getDataFile,
+    getUser,
+    updateChar } = require('./utils.js')
 
-/**
- * Finds a user by username.
- * @param {import('discord.js').Client} bot A Discord client reference.
- * @param {string} username The username to find.
- */
-function getUser(bot, username) {
-    return bot.users.find(u => u.username === username)
-}
-
-/**
- * Gets the data from the JSON as an object.
- * @param {string} fileName The filename of the data.
- * @returns An object containing the data in the file.
- */
-function getDataFile(fileName) {
-    let raw = fs.readFileSync(fileName, 'utf8')
-    return JSON.parse(raw)
-}
-
-/**
- * Sets points on user's account.
- * @param {CharProfile} char
- * @param {number} val 
- */
-function setBalance(char, val) {
-    let tbl = getDataFile(BANK_FILE)
-    let charID = char.userID
-    tbl[charID] = val
-    saveData(tbl, BANK_FILE)
-}
-
-/**
- * Withdraws amt from char's bank account.
- * @param {CharProfile} char Character withdrawing the money.
- * @param {number} amt The amount to be withdrawn.
- */
-function withdraw(char, amt) {
-    let result = ""
-    let charID = char.userID
-    let bank = getDataFile(BANK_FILE)
-    let chars = getDataFile(CHAR_FILE)
-    let curAmt = bank[charID]
-    if (amt <= 0)
-        result = 'Amount must be greater than zero.'
-    else if (typeof (curAmt) === 'undefined')
-        result = 'No account associated with this character'
-    else if (amt > curAmt) {
-        result = 'Insufficient funds.'
-    } else {
-        char.money += amt
-        bank[charID] -= amt
-        saveData(bank, BANK_FILE)
-        result = `Withdrew ${amt} from bank account; new balance is ${bank[charID]}`
-    }
-    chars.characters[char.userID] = char
-    saveData(chars, CHAR_FILE)
-    saveData(bank, BANK_FILE)
-    return result
-}
-
-
-/**
- * Deposits amt into char's bank account.
- * @param {CharProfile} char 
- * @param {number} amt 
- */
-function deposit(char, amt) {
-    let bank = getDataFile(BANK_FILE)
-    let chars = getDataFile(CHAR_FILE)
-    let charID = char.userID
-    let result = ""
-    amt = Math.min(amt, char.money)
-    if (amt <= 0)
-        result = "Amount must be greater than zero."
-    else if (typeof (bank[charID]) === 'undefined') {
-        char.money -= amt
-        setBalance(char, amt)
-        result = `${amt} deposited into new account.`
-    } else {
-        char.money -= amt
-        bank[charID] += amt
-        result = `${amt} deposited into bank account; new balance is ${bank[charID]}.`
-        saveData(bank, BANK_FILE)
-    }
-    chars.characters[charID] = char
-    saveData(chars, CHAR_FILE)
-    return result
-}
-
-/**
- * Gets points on user's account.
- * @param {CharProfile} char
- */
-function getBalance(char) {
-    let tbl = getDataFile(BANK_FILE)
-    let charID = char.userID
-    return tbl[charID] || 0
-}
-
-/**
- * Saves obj to filename.
- * @param {any} obj The object to save.
- * @param {string} fileName The filename to save to.
- */
-function saveData(obj, fileName) {
-    fs.writeFileSync(fileName, JSON.stringify(obj, null, 4), 'utf8')
-}
-
-/**
- * Returns a CharProfile with the character's name.
- * @param {import('discord.js').User} user The user who owns the character.
- * @param {string} charName Name of the character being found.
- * @returns {CharProfile | null} The CharProfile with the given charName,
- * or null if not found.
- */
-function charFromFile(user, charName) {
-    let charTbl = getDataFile(CHAR_FILE)
-    let charID = `${charName}-${user.id}`
-    let charRaw = charTbl.characters[charID]
-    if (charRaw) {
-        return new CharBuilder(user, charRaw.name)
-            .withJob(charRaw.job)
-            .withRace(charRaw.race)
-            .withStartingMoney(charRaw.money)
-            .build()
-    } else {
-        return null;
-    }
-}
 
 commands = {}
 commands.docs = {
@@ -139,7 +19,10 @@ commands.docs = {
     viewchar: 'Usage: `!viewchar name`\nViews the character named **name**.\nExample: `!viewchar Rikkas`',
     deposit: 'Usage: `!deposit name amount`\nDeposits **amount** into **name**\'s bank account.\nExample: `!deposit Rikkas 300`\nIf **amount** is more than what the character has on them, the character will deposit all of their current funds.',
     withdraw: 'Usage: `!withdraw name amount`\nWithdraws **amount** from **name**\'s bank account.\nExample: `!withdraw Rikkas 300`\nAn error will be given if there are not enough funds in the character\'s account.',
-    balance: 'Usage: `!balance name`\nGets the current bank balance for **name**\'s account.\nExample: `!balance Rikkas`'
+    balance: 'Usage: `!balance name`\nGets the current bank balance for **name**\'s account.\nExample: `!balance Rikkas`',
+    describe: 'Usage: `!describe name`\nEnters description mode. The next message you send will change your character\'s description.\n`!cancel` will prevent changes to the description.',
+    addmoney: 'Usage: `!addmoney name amount`\nAdds **amount** to **name**\'s personal funds.\nExample: `!addmoney Rikkas 300`',
+    spendmoney: 'Usage: `!spendmoney name amount`\nSpends **amount** of **name**\'s personal funds.\nExample: `!spendmoney Rikkas 300`\nAn error will be given if there are not enough funds on the character.'
 }
 
 /**
@@ -183,6 +66,7 @@ commands.createchar = function (bot, chan, user, name, race) {
             chan.send(char.toString())
         }
     }
+    return [userModes.MODE_TALK, null]
 }
 
 /**
@@ -204,6 +88,7 @@ commands.removechar = function (bot, chan, user, charName) {
     saveData(charTbl, CHAR_FILE)
     saveData(bankTbl, BANK_FILE)
     chan.send(`Character ${charName}deleted.`)
+    return [userModes.MODE_TALK, null]
 }
 
 /**
@@ -222,6 +107,7 @@ commands.viewchar = function (bot, chan, user, charName) {
         chan.send('Try `!viewchar (your character\'s name)`.')
     else
         chan.send(`${charName} does not exist. Try \`!createchar ${charName} (race).\`.'`)
+    return [userModes.MODE_TALK, null]
 }
 
 /**
@@ -238,7 +124,7 @@ commands.balance = function (bot, chan, user, charName) {
         chan.send(`${charName} has ${bal} coins stored here.`)
     } else
         chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
-
+    return [userModes.MODE_TALK, null]
 }
 
 /**
@@ -255,6 +141,7 @@ commands.withdraw = function (bot, chan, user, charName, amt) {
         chan.send(withdraw(char, val))
     } else
         chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
+    return [userModes.MODE_TALK, null]
 }
 
 /**
@@ -271,6 +158,7 @@ commands.deposit = function (bot, chan, user, charName, amt) {
         chan.send(deposit(char, val))
     } else
         chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
+    return [userModes.MODE_TALK, null]
 }
 
 /**
@@ -280,15 +168,59 @@ commands.deposit = function (bot, chan, user, charName, amt) {
  * @param {string} cmdName The command to explain
  */
 commands.help = function (bot, chan, user, cmdName) {
+    let helpList = ""
     if (cmdName && this.docs[cmdName])
         chan.send(`!\`${cmdName}\`\n${this.docs[cmdName]}`)
     else if (cmdName && !this.docs[cmdName])
         chan.send(`No help available for ${cmdName}.`)
     else {
         for (let cmd of Object.keys(this.docs)) {
-            chan.send(`!\`${cmd}\`\n${this.docs[cmd]}`)
+            helpList += `!\`${cmd}\`\n${this.docs[cmd]}\n\n`
         }
+        chan.send(helpList)
     }
+    return [userModes.MODE_TALK, null]
+}
+
+commands.describe = function (bot, chan, user, charName) {
+    let char = charFromFile(user, charName)
+    if (char) {
+        chan.send(`Enter description for ${charName}`)
+        return [userModes.MODE_DESC, char]
+    } else {
+        chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
+        return [userModes.MODE_TALK, null]
+    }
+}
+
+commands.spendmoney = function (bot, chan, user, charName, amt) {
+    let char = charFromFile(user, charName)
+    let val = parseInt(amt, 10)
+    if (char) {
+        if (val > char.money) {
+            chan.send(`${char.name} has Insufficient funds.`)
+        } else {
+            char.money -= amt
+            updateChar(char)
+            chan.send(`${amt} spent from personal funds; ${char.money} coins left.`)
+        }
+    } else {
+        chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
+    }
+    return [userModes.MODE_TALK, null]
+}
+
+commands.addmoney = function (bot, chan, user, charName, amt) {
+    let char = charFromFile(user, charName)
+    let val = parseInt(amt, 10)
+    if (char) {
+        char.money += val
+        updateChar(char)
+        chan.send(`${amt} added to personal funds; ${char.money} coins left.`)
+    } else {
+        chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
+    }
+    return [userModes.MODE_TALK, null]
 }
 
 module.exports = commands

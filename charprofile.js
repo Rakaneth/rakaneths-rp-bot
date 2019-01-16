@@ -10,6 +10,7 @@ class CharProfile {
         this.money = 0
         this.race = "Human"
         this.job = "Fighter"
+        this.desc = "No description"
     }
 
     toString() {
@@ -19,6 +20,7 @@ Name: ${this.name}
 Race: ${this.race}
 Job: ${this.job}
 Money: ${this.money}
+Description: ${this.desc}
 \`\`\``
     }
 }
@@ -37,6 +39,10 @@ class CharBuilder {
     }
     withJob(job) {
         this._char.job = job
+        return this
+    }
+    withDesc(desc) {
+        this._char.desc = desc
         return this
     }
     build() {
