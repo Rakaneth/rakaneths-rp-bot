@@ -170,12 +170,12 @@ commands.deposit = function (bot, chan, user, charName, amt) {
 commands.help = function (bot, chan, user, cmdName) {
     let helpList = ""
     if (cmdName && this.docs[cmdName])
-        chan.send(`!\`${cmdName}\`\n${this.docs[cmdName]}`)
+        chan.send(`\`!${cmdName}\`\n${this.docs[cmdName]}`)
     else if (cmdName && !this.docs[cmdName])
         chan.send(`No help available for ${cmdName}.`)
     else {
         for (let cmd of Object.keys(this.docs)) {
-            helpList += `!\`${cmd}\`\n${this.docs[cmd]}\n\n`
+            helpList += `\`!${cmd}\`\n${this.docs[cmd]}\n\n`
         }
         chan.send(helpList)
     }
