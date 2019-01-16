@@ -12,6 +12,16 @@ function getUser(bot, username) {
 }
 
 /**
+ * Gets a role by name.
+ * @param {import('discord.js').Guild} guild Guild reference
+ * @param {string} roleName name of the role to find
+ * @returns {import('discord.js').Role} The specified role.
+ */
+function getRole(guild, roleName) {
+    return guild.roles.find(r => r.name === roleName)
+}
+
+/**
  * Gets the data from the JSON as an object.
  * @param {string} fileName The filename of the data.
  * @returns An object containing the data in the file.
@@ -177,5 +187,6 @@ module.exports = {
     getDataFile,
     getUser,
     updateChar,
-    charByName
+    charByName,
+    getRole
 }

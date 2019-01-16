@@ -33,36 +33,38 @@ bot.on('ready', () => {
 
 bot.on('message', (msg) => {
     let user = msg.author
+    let chan = msg.channel
+    let guild = msg.guild
     if (!modes[user.id])
-        modes[user.id] = [usermodes.MODE_TALK, null]
-    let [userMode, char] = modes[msg.author.id]
+        modes[user.id] = { mode: usermodes.MODE_TALK, char: null }
+    let { mode, char } = modes[msg.author.id]
     if (msg.author !== bot.user) {
-        if (!userMode || userMode === usermodes.MODE_TALK) {
+        if (!mode || mode === usermodes.MODE_TALK) {
             if (msg.channel.name === 'bot-test') {
                 let cmdRegex = /!(.*)/g
                 let cmdParse = cmdRegex.exec(msg.content)
                 if (cmdParse) {
-                    let cmdSplit = cmdParse[1].split(/\s+/)
-                    cmd = cmdSplit.shift()
-                    let args = [bot, msg.channel, msg.author]
-                    let fn = cmds[cmd]
-                    if (!fn) {
+                    let args = cmdParse[1].split(/\s+/)
+                    let cmdName = args.shift()
+                    let cmd = cmds[cmdName]
+                    if (!cmd) {
+                        chan.send(`No such command: ${cmdName}. Try \`!help\` to see a list of commands.`)
                         console.error(`No such command: ${cmd}`)
                     } else {
-                        args = args.concat(cmdSplit)
-                        modes[user.id] = fn.apply(cmds, args)
+                        let opts = { bot, user, chan, guild, args }
+                        modes[user.id] = cmd.execute(opts)
                     }
                 }
             }
-        } else if (userMode === usermodes.MODE_DESC) {
+        } else if (mode === usermodes.MODE_DESC) {
             if (msg.content === '!cancel') {
-                msg.channel.send(`Canceled; description for ${char.name} unchanged.`)
-                modes[user.id] = [usermodes.MODE_TALK, null]
+                chan.send(`Canceled; description for ${char.name} unchanged.`)
+                modes[user.id] = { mode: usermodes.MODE_TALK, char: null }
             } else {
                 char.desc = msg.content
                 updateChar(char)
-                msg.channel.send(char.toString())
-                modes[msg.author.id] = [usermodes.MODE_TALK, null]
+                chan.send(char.toString())
+                modes[msg.author.id] = { mode: usermodes.MODE_TALK, char: null }
             }
         }
     }
