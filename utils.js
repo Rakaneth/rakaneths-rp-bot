@@ -152,6 +152,7 @@ function charByName(charName) {
         char.job = charRaw.job
         char.money = charRaw.money
         char.desc = charRaw.desc
+        char.race = charRaw.race
         return char
     } else
         return null
