@@ -3,6 +3,11 @@
 This is a super basic Discord RP bot.
 
 # CHANGELOG
+## v. 0.2.0-ALPHA
+
+* New command: `!changejob name job` - sets `name`'s job to `job`.
+* Internal code cleanup.
+
 ## v. 0.1.2-ALPHA
 
 * `!viewchar` now views any character, not just those owned by the user.

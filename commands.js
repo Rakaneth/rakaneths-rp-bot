@@ -269,6 +269,30 @@ function spendMoneyCB(bot, chan, user, guild, charName, amt) {
     return { mode: userModes.MODE_TALK, char: null }
 }
 
+/**
+ * 
+ * @param {import('discord.js').Client} bot Discord bot reference
+ * @param {import('discord.js').TextChannel} chan Discord channel.
+ * @param {import('discord.js').User} user User sending the message,
+ * @param {import('discord.js').Guild} guild Server reference.
+ * @param {string} charName The character whose job to change.
+ * @param {string} newJob The character's new job.
+ * @returns {CommandResult} The CommandResult of this command.
+ */
+function changeJobCB(bot, chan, user, guild, charName, newJob) {
+    let char = charFromFile(user, charName)
+    if (char && newJob) {
+        char.job = newJob
+        updateChar(char)
+        chan.send(`${charName}'s job is now ${newJob}.`)
+    } else if (!newJob) {
+        chan.send('New job required. Try `!changejob name job.`')
+    } else {
+        chan.send(`${charName} does not exist. Try \`!createchar ${charName} (your character's race)\``)
+    }
+    return { mode: userModes.MODE_TALK, char: null }
+}
+
 commands.createchar = new CommandBuilder()
     .withName('createchar')
     .withHelpText('Usage: `!createchar name race`\nCreates a character of race `race` named `name`.\nExample: `!createchar Rikkas Dwarf`')
@@ -327,6 +351,12 @@ commands.addmoney = new CommandBuilder()
     .withName('addmoney')
     .withHelpText('Usage: `!addmoney name amount`\nAdds `amount` to `name`\'s personal funds.\nExample: `!addmoney Rikkas 300`')
     .withCallback(addMoneyCB)
+    .build()
+
+commands.changejob = new CommandBuilder()
+    .withName('changejob')
+    .withHelpText('Usage: `!changejob name job`\nChanges `name`\'s job to `job`.\nExample: `!changejob Rikkas Runesmith`')
+    .withCallback(changeJobCB)
     .build()
 
 module.exports = commands
